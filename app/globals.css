@@ -93,6 +93,7 @@ a { color: inherit; }
 .feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .feature-card { min-height: 235px; display: flex; flex-direction: column; align-items: flex-start; }
 .feature-card p { flex: 1; }
+.feature-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .vault-panel { margin-top: 16px; min-height: 290px; }
 .vault-count { color: var(--muted); font-size: 12px; font-weight: 650; }
 .document-list { margin-top: 14px; display: grid; }
@@ -106,6 +107,10 @@ a { color: inherit; }
 .status-pill.review { color: #a55e25; background: #fff0e3; }
 .status-pill.stored { color: #217658; background: #e8f7f0; }
 .document-actions { display: flex; gap: 5px; }
+.csv-modal { width: min(760px, 100%); }
+.modal-heading > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.csv-preview { margin-top: 18px; padding: 14px; background: #f5f5f8; border-radius: 11px; }
+.csv-preview > div { margin-top: 8px; display: grid; gap: 5px; color: var(--muted); font-size: 11px; }
 .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .setting-card { min-height: 150px; display: flex; align-items: flex-start; gap: 15px; }
 .setting-card h2 { margin-top: 2px; }
