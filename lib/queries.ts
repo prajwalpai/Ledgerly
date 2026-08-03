@@ -93,6 +93,9 @@ export function getDashboardSummary(period = getSelectedPeriod()) {
      FROM transactions WHERE ${where}
      ORDER BY date DESC, createdAt DESC LIMIT 5`,
   ).all(...params);
+  const monthly = database.prepare(`SELECT substr(date,1,7) month,SUM(CASE WHEN type='income' THEN amountCents ELSE 0 END) incomeCents,SUM(CASE WHEN type='expense' THEN amountCents ELSE 0 END) spendingCents FROM transactions WHERE ${where} GROUP BY substr(date,1,7) ORDER BY month DESC LIMIT 7`).all(...params).reverse();
+  const categories = database.prepare(`SELECT categoryLabel,SUM(amountCents) amountCents FROM transactions WHERE type='expense' AND ${where} GROUP BY categoryLabel ORDER BY amountCents DESC`).all(...params);
+  const upcoming = database.prepare(`SELECT serviceName name,nextRenewalDate nextDate,amountCents,'subscription' kind FROM subscriptions WHERE active=1 AND nextRenewalDate>=date('now','localtime') UNION ALL SELECT name,nextDate,amountCents,'recurring' kind FROM recurring_entries WHERE active=1 AND nextDate>=date('now','localtime') ORDER BY nextDate LIMIT 5`).all();
 
   const settings = getSettings();
   const income = Number(totals.incomeCents);
@@ -107,6 +110,9 @@ export function getDashboardSummary(period = getSelectedPeriod()) {
     liabilitiesCents: Number(settings.liabilitiesCents ?? 0),
     netWorthConfigured: settings.netWorthConfigured === true,
     recent,
+    monthly,
+    categories,
+    upcoming,
   };
 }
 
@@ -140,5 +146,6 @@ export function getState() {
     ).all(),
     settings: getSettings(),
     detectionSuggestions: detectRecurringPatterns(),
+    ignoredSuggestionCount: (database.prepare("SELECT COUNT(*) count FROM dismissed_patterns").get() as {count:number}).count,
   };
 }

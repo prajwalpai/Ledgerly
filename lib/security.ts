@@ -3,6 +3,10 @@ import "server-only";
 import { NextRequest } from "next/server";
 
 const allowedHosts = new Set(["127.0.0.1:4317", "localhost:4317"]);
+if (process.env.NODE_ENV === "development") {
+  allowedHosts.add("127.0.0.1:4318");
+  allowedHosts.add("localhost:4318");
+}
 
 export function assertLocalRequest(request: NextRequest) {
   const host = request.headers.get("host")?.toLowerCase();

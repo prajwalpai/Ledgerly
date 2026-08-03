@@ -51,6 +51,39 @@ function normalizedTags(tags: string[]) {
   return [...unique.entries()].map(([normalizedName, name]) => ({ normalizedName, name }));
 }
 
+function ruleMatchText(value: string) {
+  return value
+    .replace(/^when\s+/i, "")
+    .replace(/^(?:merchant|description|payee)\s+(?:contains|is|equals)\s+/i, "")
+    .trim();
+}
+
+function applyImportRules(input: TransactionInput) {
+  if (input.source === "manual") return input;
+  const database = getDatabase();
+  const rules = database.prepare("SELECT whenText, thenText FROM rules WHERE enabled = 1 ORDER BY createdAt")
+    .all() as Array<{ whenText: string; thenText: string }>;
+  let category = input.category;
+  const tags = [...input.tags];
+  const merchant = normalizeName(input.merchant);
+
+  for (const rule of rules) {
+    const needle = normalizeName(ruleMatchText(rule.whenText));
+    if (!needle || !merchant.includes(needle)) continue;
+    const categoryMatch = rule.thenText.match(/(?:set\s+)?category(?:\s+to|\s+is|:)?\s*[“”"']?([^,;]+?)[“”"']?(?=\s*(?:[,;]|$))/i);
+    if (categoryMatch) {
+      const requested = normalizeName(categoryMatch[1]);
+      const found = database.prepare("SELECT name FROM categories WHERE normalizedName = ?").get(requested) as { name: string } | undefined;
+      if (found) category = found.name;
+    }
+    for (const match of rule.thenText.matchAll(/(?:add\s+)?tag(?:\s+to|\s+is|:)?\s*[“”"']?([^,;]+?)[“”"']?(?=\s*(?:[,;]|$))/gi)) {
+      const tag = match[1].trim();
+      if (tag) tags.push(tag);
+    }
+  }
+  return { ...input, category, tags };
+}
+
 export function insertTransactions(raw: unknown) {
   const candidateBatch = Array.isArray(raw) ? raw : [raw];
   if (candidateBatch.length === 0 || candidateBatch.length > 1000) {
@@ -69,17 +102,22 @@ export function insertTransactions(raw: unknown) {
         continue;
       }
 
-      const input = parsed.data;
-      const category = lookupDefinition("categories", input.categoryId);
-      const account = lookupDefinition("accounts", input.accountId);
-      const categoryLabel = category?.name ?? input.category ?? "Needs review";
-      const accountLabel = account?.name ?? input.account ?? "Imported account";
-      const fingerprint = transactionFingerprint({ ...input, account: accountLabel });
+      const originalInput = parsed.data;
+      const originalAccount = lookupDefinition("accounts", originalInput.accountId);
+      const originalAccountLabel = originalAccount?.name ?? originalInput.account ?? "Imported account";
+      const fingerprint = transactionFingerprint({ ...originalInput, account: originalAccountLabel });
 
+      // Duplicate identity is decided before rules, so a rule can never alter it.
       if (database.prepare("SELECT 1 FROM transactions WHERE fingerprint = ?").get(fingerprint)) {
         result.duplicates += 1;
         continue;
       }
+
+      const input = applyImportRules(originalInput);
+      const category = lookupDefinition("categories", input.categoryId);
+      const account = lookupDefinition("accounts", input.accountId);
+      const categoryLabel = category?.name ?? input.category ?? "Needs review";
+      const accountLabel = account?.name ?? input.account ?? "Imported account";
 
       const now = new Date().toISOString();
       const id = crypto.randomUUID();

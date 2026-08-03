@@ -39,8 +39,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const database = getDatabase();
     const document = database.prepare("SELECT id, transactionId FROM documents WHERE id = ?").get(id) as { id: string; transactionId: string | null } | undefined;
     if (!document) return NextResponse.json({ error: "Document not found." }, { status: 404 });
-    if (document.transactionId) return NextResponse.json({ error: "This document is already linked to a transaction." }, { status: 409 });
     const body = await request.json();
+    if (body?.statementReviewed === true) {
+      database.prepare("UPDATE documents SET status = 'stored', extractionJson = NULL WHERE id = ?").run(id);
+      return NextResponse.json({ reviewed: true });
+    }
+    if (document.transactionId) return NextResponse.json({ error: "This document is already linked to a transaction." }, { status: 409 });
     const result = insertTransactions({ ...body, receipt: true, source: "document" });
     if (!result.inserted) return NextResponse.json({ error: result.duplicates ? "That transaction already exists." : result.errors[0] ?? "The transaction could not be created.", result }, { status: 409 });
     const transactionId = (result.rows[0] as { id: string }).id;

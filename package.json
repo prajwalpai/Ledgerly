@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:check": "node --import tsx scripts/check-database.ts",
-    "sync:drive": "node --import tsx scripts/sync-drive.ts"
+    "sync:drive": "node --import tsx scripts/sync-drive.ts",
+    "verify:core": "node --conditions=react-server --import tsx scripts/verify-core.ts"
   },
   "engines": {
     "node": ">=22"

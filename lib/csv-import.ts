@@ -20,6 +20,8 @@ const requestSchema = z.object({
   rows: z.array(z.record(z.string(), z.unknown())).min(1).max(5000),
   mapping: mappingSchema,
   fallbackAccount: z.string().trim().min(1).max(80).default("Imported account"),
+  source: z.enum(["csv", "google-drive"]).default("csv"),
+  defaultTags: z.array(z.string().trim().min(1).max(60)).max(10).default([]),
 });
 
 function cell(row: Record<string, unknown>, key?: string) {
@@ -80,7 +82,7 @@ export function importCsvRows(raw: unknown) {
     const category = categories.get(normalizeName(rawCategory)) ?? "Needs review";
     const rawAccount = cell(row, input.mapping.account);
     const account = accounts.get(normalizeName(rawAccount)) ?? (rawAccount || input.fallbackAccount);
-    candidates.push({ date, merchant, amount, type, category, account, tags: [], receipt: false, source: "csv" as const });
+    candidates.push({ date, merchant, amount, type, category, account, tags: input.defaultTags, receipt: false, source: input.source });
   }
   if (!candidates.length) return { inserted: 0, duplicates: 0, skipped, needsReview: 0, rows: [], errors: ["No valid transaction rows were found."] };
   const result = insertTransactions(candidates);
