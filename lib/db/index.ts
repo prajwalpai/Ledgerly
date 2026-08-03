@@ -33,6 +33,11 @@ function initialize(database: LedgerlyDatabase) {
   const migrate = database.transaction(() => {
     for (const statement of migrationV1) database.prepare(statement).run();
 
+    const documentColumns = database.prepare("PRAGMA table_info(documents)").all() as Array<{ name: string }>;
+    const columnNames = new Set(documentColumns.map((column) => column.name));
+    if (!columnNames.has("transactionId")) database.prepare("ALTER TABLE documents ADD COLUMN transactionId TEXT REFERENCES transactions(id) ON DELETE SET NULL").run();
+    if (!columnNames.has("extractionJson")) database.prepare("ALTER TABLE documents ADD COLUMN extractionJson TEXT").run();
+
     const applied = database
       .prepare("SELECT version FROM schema_migrations WHERE version = ?")
       .get(schemaVersion);

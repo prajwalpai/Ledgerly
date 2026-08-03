@@ -1,4 +1,4 @@
-export const schemaVersion = 1;
+export const schemaVersion = 2;
 
 export const migrationV1 = [
   `CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -66,6 +66,7 @@ export const migrationV1 = [
     driveFileId TEXT,
     driveModifiedAt TEXT,
     transactionId TEXT REFERENCES transactions(id) ON DELETE SET NULL,
+    extractionJson TEXT,
     createdAt TEXT NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS goals (

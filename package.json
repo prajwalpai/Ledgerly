@@ -9,7 +9,8 @@
     "start": "NEXT_TELEMETRY_DISABLED=1 next start --hostname 127.0.0.1 --port 4317",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "db:check": "node --import tsx scripts/check-database.ts"
+    "db:check": "node --import tsx scripts/check-database.ts",
+    "sync:drive": "node --import tsx scripts/sync-drive.ts"
   },
   "engines": {
     "node": ">=22"

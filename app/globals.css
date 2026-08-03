@@ -107,6 +107,7 @@ a { color: inherit; }
 .status-pill.review { color: #a55e25; background: #fff0e3; }
 .status-pill.stored { color: #217658; background: #e8f7f0; }
 .document-actions { display: flex; gap: 5px; }
+.button.review-button { min-height: 32px; padding: 0 10px; color: #92501f; background: #fff0e3; }
 .csv-modal { width: min(760px, 100%); }
 .modal-heading > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
 .csv-preview { margin-top: 18px; padding: 14px; background: #f5f5f8; border-radius: 11px; }
@@ -177,6 +178,17 @@ a { color: inherit; }
 .definition-list span { display: flex; align-items: center; gap: 8px; }
 .definition-list small { color: var(--muted); font-size: 10px; }
 .health-card { min-height: 110px; margin-top: 16px; }
+.entity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.entity-grid > .section-empty { grid-column: 1 / -1; }
+.entity-card { min-height: 120px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.entity-card h2 { margin: 0 0 8px; }
+.entity-card p { margin: 0; color: var(--muted); }
+.entity-actions { display: flex; gap: 5px; }
+.suggestions { margin-bottom: 16px; }
+.suggestion-card { min-height: 92px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.suggestion-card h2 { margin: 0 0 6px; }
+.suggestion-card p { margin: 0; color: var(--muted); }
+.suggestion-card > div:last-child { display: flex; gap: 8px; }
 
 @media (max-width: 1120px) {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -202,6 +214,8 @@ a { color: inherit; }
   .dashboard-grid { gap: 13px; }
   .feature-grid, .settings-grid { grid-template-columns: 1fr; }
   .definition-grid { grid-template-columns: 1fr; }
+  .entity-grid { grid-template-columns: 1fr; }
+  .suggestion-card { align-items: flex-start; flex-direction: column; }
   .panel { padding: 18px; }
   .transaction-panel { padding: 0; }
   .filters { grid-template-columns: 1fr; }

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeftRight, BadgeDollarSign, FileText, FolderOpen, Plus, RefreshCw,
+  ArrowLeftRight, IndianRupee, FileText, FolderOpen, Plus, RefreshCw,
   Settings, Sparkles, Target, Tags, Upload, WalletCards, WandSparkles,
 } from "lucide-react";
+import { getState } from "@/lib/queries";
+import { EntityManager } from "@/components/entity-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ const sections = {
   },
   subscriptions: {
     eyebrow: "Commitments", title: "Subscriptions", description: "See renewals and the real monthly cost of your services.",
-    icon: BadgeDollarSign, emptyTitle: "No subscriptions yet", emptyBody: "Keep a detected suggestion or add a subscription manually.", action: "Add subscription",
+    icon: IndianRupee, emptyTitle: "No subscriptions yet", emptyBody: "Keep a detected suggestion or add a subscription manually.", action: "Add subscription",
   },
   budgets: {
     eyebrow: "Plan", title: "Budgets", description: "Set category limits and compare them with real monthly spending.",
@@ -77,6 +79,11 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
   const { section } = await params;
   if (section === "documents") return <DocumentsPage />;
   if (section === "settings") return <SettingsPage />;
+  if (["budgets", "goals", "subscriptions", "recurring", "rules"].includes(section)) {
+    const state = getState();
+    const items = section === "recurring" ? state.recurring : state[section as "budgets" | "goals" | "subscriptions" | "rules"];
+    return <EntityManager kind={section as "budgets" | "goals" | "subscriptions" | "recurring" | "rules"} initialItems={JSON.parse(JSON.stringify(items))} categories={JSON.parse(JSON.stringify(state.categories))} accounts={JSON.parse(JSON.stringify(state.accounts))} suggestions={JSON.parse(JSON.stringify(state.detectionSuggestions))} />;
+  }
   if (!(section in sections)) notFound();
   const definition = sections[section as keyof typeof sections];
   return (

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       database: true,
       ocr: { tesseract: toolReady("tesseract", ["--version"]), pdftotext: toolReady("pdftotext", ["-v"]), pdftoppm: toolReady("pdftoppm", ["-v"]) },
       googleDriveMounted: driveMounted(),
-      schedulerConfigured: false,
+      schedulerConfigured: fs.existsSync(path.join(process.env.HOME ?? "", "Library", "LaunchAgents", "com.ledgerly.drive-sync.plist")),
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const response = safeApiError(error);

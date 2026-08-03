@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDatabase } from "@/lib/db";
+import { detectRecurringPatterns } from "@/lib/recurring-detection";
 
 export type Period =
   | "all-time"
@@ -131,12 +132,13 @@ export function getState() {
     ).all(),
     rules: database.prepare("SELECT * FROM rules ORDER BY createdAt DESC").all(),
     goals: database.prepare("SELECT * FROM goals ORDER BY createdAt DESC").all(),
-    budgets: database.prepare("SELECT * FROM budgets ORDER BY createdAt DESC").all(),
+    budgets: database.prepare(`SELECT b.*,COALESCE(SUM(CASE WHEN t.type='expense' AND strftime('%Y-%m',t.date)=strftime('%Y-%m','now','localtime') THEN t.amountCents ELSE 0 END),0) spentCents FROM budgets b LEFT JOIN transactions t ON t.categoryLabel=b.categoryLabel GROUP BY b.id ORDER BY b.createdAt DESC`).all(),
     subscriptions: database.prepare("SELECT * FROM subscriptions ORDER BY nextRenewalDate").all(),
     recurring: database.prepare("SELECT * FROM recurring_entries ORDER BY nextDate").all(),
     documents: database.prepare(
-      "SELECT id, filename, mimeType, size, status, source, driveModifiedAt, createdAt FROM documents ORDER BY createdAt DESC LIMIT 100",
+      "SELECT id, filename, mimeType, size, status, source, driveModifiedAt, transactionId, extractionJson, createdAt FROM documents ORDER BY createdAt DESC LIMIT 100",
     ).all(),
     settings: getSettings(),
+    detectionSuggestions: detectRecurringPatterns(),
   };
 }

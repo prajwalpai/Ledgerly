@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, ArrowLeftRight, RefreshCw, BadgeDollarSign, WalletCards,
+  LayoutDashboard, ArrowLeftRight, RefreshCw, IndianRupee, WalletCards,
   Target, FileText, WandSparkles, Settings, Upload, Plus, HardDrive,
 } from "lucide-react";
 
@@ -11,7 +11,7 @@ const navigation = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/recurring", label: "Recurring", icon: RefreshCw },
-  { href: "/subscriptions", label: "Subscriptions", icon: BadgeDollarSign },
+  { href: "/subscriptions", label: "Subscriptions", icon: IndianRupee },
   { href: "/budgets", label: "Budgets", icon: WalletCards },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/documents", label: "Documents", icon: FileText },

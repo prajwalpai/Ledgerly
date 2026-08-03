@@ -1,5 +1,3 @@
-import "server-only";
-
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -46,12 +44,13 @@ function extractText(filePath: string, mimeType: string) {
 function extractionSummary(text: string) {
   if (!text.trim()) return null;
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const date = text.match(/\b(20\d{2})[-/.](0?[1-9]|1[0-2])[-/.]([0-2]?\d|3[01])\b/)?.[0] ?? null;
-  const amounts = [...text.matchAll(/(?:USD|\$)\s*([0-9]{1,7}(?:,[0-9]{3})*(?:\.\d{2}))/gi)].map((match) => match[1]);
+  const dateMatch = text.match(/\b(20\d{2})[-/.](0?[1-9]|1[0-2])[-/.]([0-2]?\d|3[01])\b/);
+  const date = dateMatch ? `${dateMatch[1]}-${dateMatch[2].padStart(2, "0")}-${dateMatch[3].padStart(2, "0")}` : null;
+  const amounts = [...text.matchAll(/(?:INR|₹|Rs\.?|USD|\$)\s*([0-9]{1,9}(?:,[0-9]{2,3})*(?:\.\d{2}))/gi)].map((match) => match[1]);
   return { merchantCandidate: lines[0]?.slice(0, 120) ?? null, dateCandidate: date, totalCandidate: amounts.at(-1) ?? null, textDetected: true };
 }
 
-export async function storeDocument(file: File, transactionId?: string | null) {
+export async function storeDocument(file: File, transactionId?: string | null, options?: { source?: "upload"|"google-drive"; driveFileId?: string; driveModifiedAt?: string }) {
   if (!file.size || file.size > maxFileSize) throw new Error("Files must be between 1 byte and 20 MB.");
   const bytes = Buffer.from(await file.arrayBuffer());
   const detected = await fileTypeFromBuffer(bytes);
@@ -60,7 +59,7 @@ export async function storeDocument(file: File, transactionId?: string | null) {
 
   const id = crypto.randomUUID();
   const filename = safeFilename(file.name);
-  const vaultKey = path.join("uploads", `${id}-${filename}`);
+  const vaultKey = path.join(options?.source === "google-drive" ? "drive-inbox" : "uploads", `${options?.driveFileId ?? id}-${filename}`);
   const destination = resolveVaultKey(vaultKey);
   fs.mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
   const temporary = `${destination}.uploading`;
@@ -74,9 +73,9 @@ export async function storeDocument(file: File, transactionId?: string | null) {
   const now = new Date().toISOString();
   try {
     getDatabase().prepare(
-      `INSERT INTO documents (id, filename, mimeType, size, vaultKey, sha256, status, source, transactionId, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'upload', ?, ?)`,
-    ).run(id, file.name.slice(0, 255), mimeType, bytes.length, vaultKey, sha256, status, transactionId ?? null, now);
+      `INSERT INTO documents (id, filename, mimeType, size, vaultKey, sha256, status, source, driveFileId, driveModifiedAt, transactionId, extractionJson, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, file.name.slice(0, 255), mimeType, bytes.length, vaultKey, sha256, status, options?.source ?? "upload", options?.driveFileId ?? null, options?.driveModifiedAt ?? null, transactionId ?? null, extraction ? JSON.stringify(extraction) : null, now);
   } catch (error) {
     fs.rmSync(destination, { force: true });
     throw error;
